@@ -13,7 +13,8 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     # Set some default configuration that the app will use.
     app.config.from_mapping(
-        SECRET_KEY='dev', # is used by Flask and extensions to keep data safe. It’s set to 'dev' to provide a convenient value during development, but it should be overridden with a random value when deploying.
+        # is used by Flask and extensions to keep data safe. It’s set to 'dev' to provide a convenient value during development, but it should be overridden with a random value when deploying.
+        SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
     )
 
@@ -28,17 +29,21 @@ def create_app(test_config=None):
         # ensures that app.instance_path exists.
         os.makedirs(app.instance_path)
     except OSError:
-            pass
+        pass
 
     @app.route('/hello')
     def hello():
         return "Hello, World!"
-    
+
     from . import db
     db.init_app(app)
 
     from . import auth
     app.register_blueprint(auth.bp)
 
-    return app
+    from . import blog
+    app.register_blueprint(blog.bp)
+    # Unlike the auth blueprint, the blog blueprint does not have a url_prefix. So the index view will be at /, the create view at /create, and so on. The blog is the main feature of Flaskr, so it makes sense that the blog index will be the main index.
+    app.add_url_rule('/', endpoint='index')
 
+    return app
